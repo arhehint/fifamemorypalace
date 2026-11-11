@@ -28,3 +28,5 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Keep memory trail rendering in the museum document and reuse its flag painter; adaptive canvas dimensions keep the exported card consistent with the on-screen trail.

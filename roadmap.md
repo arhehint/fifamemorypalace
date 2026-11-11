@@ -1,0 +1,4 @@
+- [x] Remove the unwanted trail subtitle and low-contrast bottom instructions.
+- [x] Make trail text, bullets, and player popup details pure white while preserving red accents.
+- [x] Rename trail labels to Player and Best Player and add visited-team flags without audio.
+- [x] Verify the trail and player popups on desktop and mobile.

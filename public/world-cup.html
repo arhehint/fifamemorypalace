@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>World Cup Memory Palace</title>
 <style>
-:root{--bg:#000;--fg:#e8e6df;--mut:#8b8a85;--acc:#e5383b;--pan:rgba(0,0,0,.92)}
+:root{--bg:#000;--fg:#e8e6df;--mut:#8b8a85;--acc:#e5383b;--pan:rgba(0,0,0,.92);--clear-text:#fff;--trail-line:#333}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden;touch-action:none}
 canvas{display:block}
 .hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 0;display:flex;gap:8px;align-items:center;pointer-events:none}
@@ -18,11 +18,13 @@ button:hover{border-color:var(--acc)}
 #tip{position:fixed;display:none;background:var(--pan);border-radius:8px;padding:8px 10px;pointer-events:none;font-size:13px;line-height:1.5}
 #tac{position:fixed;right:14px;top:70px;width:250px;background:var(--pan);border-radius:10px;padding:12px;display:none}
 #tac input{width:100%}
-#trail{position:fixed;inset:0;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;box-sizing:border-box}
-#trail canvas{max-width:100%;max-height:68vh;border-radius:10px}
+#pg{color:var(--clear-text)}
+#trail{position:fixed;inset:0;background:var(--bg);color:var(--clear-text);display:none;flex-direction:column;align-items:center;gap:16px;padding:24px 16px;box-sizing:border-box;overflow-y:auto;touch-action:pan-y;z-index:6}
+#trail canvas{max-width:100%;flex-shrink:0;border-radius:8px}
+#trail button{color:var(--clear-text)}
 </style></head><body>
 <div class="hud"><button id="bHall">Central Hall</button><button id="bTrail">Memory trail</button><div id="title"></div></div>
-<div id="prompt">Choose a team.<small>Use the arrows to turn, then click a door to enter. Unofficial fan project; brand names belong to their owners.</small></div>
+<div id="prompt">Choose a team.</div>
 <div id="cap"></div><div id="tip"></div><div id="joy"><div id="knob"></div></div>
 <div id="nav"><button id="bL">◀ Left</button><span id="vn"></span><button id="bR">Right ▶</button></div><div id="fin" style="position:fixed;left:50%;top:70px;transform:translateX(-50%);width:min(420px,86vw);background:var(--pan);border-radius:10px;padding:12px;display:none"><b>Scrub the Final</b> <span id="fMin" style="color:var(--mut)"></span><input id="fRange" type="range" min="0" max="59" value="0" style="width:100%"></div><div id="pop"><div id="pn"><div id="pk"></div><h2 id="pt"></h2><div id="pg"></div><p id="pb"></p><img id="playerPhoto" alt="" style="display:none;width:100%;height:240px;object-fit:contain;object-position:center;border-radius:8px;margin:0 0 14px;background:#fff"><button id="pc">Close</button></div></div><div id="tac"><b id="tTitle"></b><div id="tInfo" style="color:var(--mut);margin:6px 0"></div><input id="tRange" type="range" min="0" max="6" value="0"></div>
 <div id="trail"><canvas id="card" width="800" height="520"></canvas><div style="display:flex;gap:8px"><a id="dl" download="memory-trail.png"><button>Save as card</button></a><button id="tClose">Keep exploring</button></div></div>
@@ -361,11 +363,37 @@ const end=()=>{on=false;joy.x=joy.y=0;k.style.left='35px';k.style.top='35px'};j.
 $('bHall').onclick=()=>go(buildHall);
 $('tClose').onclick=()=>$('trail').style.display='none';
 $('bTrail').onclick=()=>{drawCard();$('trail').style.display='flex'};
-function drawCard(){const c=$('card'),x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,800,520);x.fillStyle='#e5383b';x.font='bold 30px system-ui';x.fillText('My World Cup Memory Trail',40,60);
- x.fillStyle='#8b8a85';x.font='15px system-ui';x.fillText('A record of where I walked: not a highlight reel.',40,88);
- const col=(t,a,xx)=>{x.fillStyle='#e8e6df';x.font='bold 16px system-ui';x.fillText(t+' ('+a.length+')',xx,130);x.font='13px system-ui';x.fillStyle='#b8b6af';a.slice(0,16).forEach((s,i)=>x.fillText(s.slice(0,34),xx,155+i*21))};
- col('Rooms',[...S.rooms],40);col('Touched',[...S.objs],290);col('Heard',S.moments,540);
- $('dl').href=c.toDataURL('image/png')}
+function drawCard(){
+ const c=$('card'),x=c.getContext('2d'),theme=getComputedStyle(document.documentElement);
+ const color=n=>theme.getPropertyValue(n).trim(),w=Math.min(800,Math.max(280,innerWidth-32)),pad=24;
+ c.width=w;x.font='14px system-ui';
+ const teams=TEAMS.filter(n=>[...S.rooms].some(r=>r===n+' locker room'||r.startsWith(n+',')));
+ const flagCols=Math.max(1,Math.floor((w-pad*2)/140)),flagRows=Math.ceil(teams.length/flagCols);
+ const start=teams.length?138+flagRows*112:154,columns=w>=650?3:1,gap=24,cw=(w-pad*2-gap*(columns-1))/columns;
+ const wrap=s=>{const lines=[];let line='';for(const word of s.split(' ')){if(x.measureText(line+(line?' ':'')+word).width>cw-18&&line){lines.push(line);line=''}let part=word;while(x.measureText(part).width>cw-18){let end=part.length;while(end>1&&x.measureText(part.slice(0,end)).width>cw-18)end--;if(line){lines.push(line);line=''}lines.push(part.slice(0,end));part=part.slice(end)}line+=(line?' ':'')+part}if(line)lines.push(line);return lines};
+ const sections=[['Rooms',[...S.rooms]],['Player',[...S.objs]],['Best Player',S.moments]].map(([title,items])=>({title,items:items.map(wrap),height:58+Math.max(1,items.length)*10+items.map(wrap).reduce((h,a)=>h+a.length*20,0)}));
+ c.height=Math.max(460,start+(columns===3?Math.max(...sections.map(s=>s.height)):sections.reduce((h,s)=>h+s.height+22,0))+pad);
+ x.fillStyle=color('--bg');x.fillRect(0,0,w,c.height);
+ x.fillStyle=color('--acc');x.fillRect(pad,22,44,4);x.font='bold '+(w<650?22:30)+'px system-ui';
+ x.fillText(w<650?'My World Cup':'My World Cup Memory Trail',pad,62);
+ if(w<650){x.font='bold 22px system-ui';x.fillText('Memory Trail',pad,90)}
+ x.fillStyle=color('--clear-text');x.font='14px system-ui';x.fillText(teams.length+' teams visited',pad,w<650?118:92);
+ const flagTop=w<650?136:112;
+ teams.forEach((n,i)=>{const xx=pad+(i%flagCols)*(w-pad*2)/flagCols,yy=flagTop+Math.floor(i/flagCols)*112;
+  x.save();x.translate(xx,yy);x.scale(.64,.64);drawFlag(x,FL[CODES[TEAMS.indexOf(n)]]);x.restore();
+  x.fillStyle=color('--acc');x.beginPath();x.arc(xx+5,yy+83,3,0,Math.PI*2);x.fill();
+  x.fillStyle=color('--clear-text');x.font='12px system-ui';x.fillText(n,xx+14,yy+87);
+ });
+ let sy=start+(w<650&&teams.length?24:0);
+ sections.forEach((s,i)=>{const xx=pad+(columns===3?i*(cw+gap):0),yy=sy;
+  x.fillStyle=color('--acc');x.fillRect(xx,yy,cw,2);x.fillStyle=color('--clear-text');x.font='bold 17px system-ui';x.fillText(s.title+' ('+s.items.length+')',xx,yy+29);
+  x.font='14px system-ui';let y=yy+56;
+  if(!s.items.length)x.fillText('—',xx,y);
+  s.items.forEach(lines=>{x.fillText('•',xx,y);lines.forEach(line=>{x.fillText(line,xx+16,y);y+=20});y+=10});
+  if(columns===1)sy+=s.height+22;
+ });
+ $('dl').href=c.toDataURL('image/png');
+}
 
 // ---- loop ----
 const clock=new THREE.Clock();
