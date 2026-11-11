@@ -367,7 +367,7 @@ function drawCard(){
  const c=$('card'),x=c.getContext('2d'),theme=getComputedStyle(document.documentElement);
  const color=n=>theme.getPropertyValue(n).trim(),w=Math.min(800,Math.max(280,innerWidth-32)),pad=24;
  c.width=w;x.font='14px system-ui';
- const teams=TEAMS.filter(n=>[...S.rooms].some(r=>r.startsWith(n+',')));
+ const teams=TEAMS.filter(n=>[...S.rooms].some(r=>r===n+' locker room'||r.startsWith(n+',')));
  const flagCols=Math.max(1,Math.floor((w-pad*2)/140)),flagRows=Math.ceil(teams.length/flagCols);
  const start=teams.length?138+flagRows*112:154,columns=w>=650?3:1,gap=24,cw=(w-pad*2-gap*(columns-1))/columns;
  const wrap=s=>{const lines=[];let line='';for(const word of s.split(' ')){if(x.measureText(line+(line?' ':'')+word).width>cw-18&&line){lines.push(line);line=''}let part=word;while(x.measureText(part).width>cw-18){let end=part.length;while(end>1&&x.measureText(part.slice(0,end)).width>cw-18)end--;if(line){lines.push(line);line=''}lines.push(part.slice(0,end));part=part.slice(end)}line+=(line?' ':'')+part}if(line)lines.push(line);return lines};
