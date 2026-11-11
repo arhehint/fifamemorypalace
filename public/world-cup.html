@@ -363,6 +363,11 @@ const end=()=>{on=false;joy.x=joy.y=0;k.style.left='35px';k.style.top='35px'};j.
 $('bHall').onclick=()=>go(buildHall);
 $('tClose').onclick=()=>$('trail').style.display='none';
 $('bTrail').onclick=()=>{drawCard();$('trail').style.display='flex'};
+function trailEntries(){
+ const players=[...S.objs].filter(o=>o.startsWith('Jersey '));
+ const bestPlayers=[...S.objs].filter(o=>o.startsWith('Best player, ')).map(o=>{const team=o.slice('Best player, '.length),best=BEST[team];return best?team+', '+best[0]:null}).filter(Boolean);
+ return {players,bestPlayers};
+}
 function drawCard(){
  const c=$('card'),x=c.getContext('2d'),theme=getComputedStyle(document.documentElement);
  const color=n=>theme.getPropertyValue(n).trim(),w=Math.min(800,Math.max(280,innerWidth-32)),pad=24;
@@ -371,7 +376,8 @@ function drawCard(){
  const flagCols=Math.max(1,Math.floor((w-pad*2)/140)),flagRows=Math.ceil(teams.length/flagCols);
  const start=teams.length?138+flagRows*112:154,columns=w>=650?3:1,gap=24,cw=(w-pad*2-gap*(columns-1))/columns;
  const wrap=s=>{const lines=[];let line='';for(const word of s.split(' ')){if(x.measureText(line+(line?' ':'')+word).width>cw-18&&line){lines.push(line);line=''}let part=word;while(x.measureText(part).width>cw-18){let end=part.length;while(end>1&&x.measureText(part.slice(0,end)).width>cw-18)end--;if(line){lines.push(line);line=''}lines.push(part.slice(0,end));part=part.slice(end)}line+=(line?' ':'')+part}if(line)lines.push(line);return lines};
- const sections=[['Rooms',[...S.rooms]],['Player',[...S.objs]],['Best Player',S.moments]].map(([title,items])=>({title,items:items.map(wrap),height:58+Math.max(1,items.length)*10+items.map(wrap).reduce((h,a)=>h+a.length*20,0)}));
+ const {players,bestPlayers}=trailEntries();
+ const sections=[['Rooms',[...S.rooms]],['Player',players],['Best Player',bestPlayers]].map(([title,items])=>({title,items:items.map(wrap),height:58+Math.max(1,items.length)*10+items.map(wrap).reduce((h,a)=>h+a.length*20,0)}));
  c.height=Math.max(460,start+(columns===3?Math.max(...sections.map(s=>s.height)):sections.reduce((h,s)=>h+s.height+22,0))+pad);
  x.fillStyle=color('--bg');x.fillRect(0,0,w,c.height);
  x.fillStyle=color('--acc');x.fillRect(pad,22,44,4);x.font='bold '+(w<650?22:30)+'px system-ui';
@@ -429,7 +435,8 @@ const cached=PH_STORE[key];show(cached||avatarURL(team,{n:num}));
 if(!cached)getPhoto(team,searchName,num).then(src=>{if(src&&$('pop').style.display!=='none'&&$('pt').textContent===t)show(src)})}
 $('pc').onclick=()=>{$('pop').style.display='none'};$('pop').onclick=e=>{if(e.target.id=='pop')$('pop').style.display='none'};
 let viewYaw=0,vi=0,lastMode='';
-const VIEWS={hall:[...Array(9)].map((_,i)=>-i*Math.PI*2/9),room:[Math.PI/2,0,-Math.PI/2],final:[0],whatif:[0]};
+const HALL_START_YAW=TEAMS.indexOf('Argentina')/TEAMS.length*Math.PI*2-Math.PI;
+const VIEWS={hall:[...Array(9)].map((_,i)=>HALL_START_YAW-i*Math.PI*2/9),room:[Math.PI/2,0,-Math.PI/2],final:[0],whatif:[0]};
 const VN={room:['Tactics board','Locker room','Jerseys']};
 const ad=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 function nav(d){const V=VIEWS[S.mode];if(V.length<2)return;vi=S.mode=='hall'?(vi+d+V.length)%V.length:Math.max(0,Math.min(V.length-1,vi+d));viewYaw=V[vi];$('vn').textContent=(VN[S.mode]||[])[vi]||''}

@@ -2,3 +2,5 @@
 - [x] Make trail text, bullets, and player popup details pure white while preserving red accents.
 - [x] Rename trail labels to Player and Best Player and add visited-team flags without audio.
 - [x] Verify the trail and player popups on desktop and mobile.
+- [x] Restrict Player to jerseys and Best Player to visited best-player names, excluding achievements.
+- [x] Start the hall facing Argentina.
